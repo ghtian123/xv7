@@ -11,7 +11,8 @@ mod logging;
 mod sbi;
 mod config;
 use config::NCPU;
-use core::sync::atomic;
+use core::sync::atomic::{AtomicBool, Ordering};
+
 
 core::arch::global_asm!(
     "
@@ -55,9 +56,6 @@ static mut stack: [u8; 4096 * NCPU] = [0u8; 4096 * NCPU];
 
 
 
-
-use core::sync::atomic::{spin_loop_hint, AtomicBool, Ordering};
-
 static AP_CAN_INIT: AtomicBool = AtomicBool::new(false);
 
 
@@ -69,16 +67,15 @@ fn clear_bss() {
     (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
 }
 
+
+use sbi::send_ipi;
+
 #[no_mangle]
 pub fn rust_main(hartid: usize) -> ! {
 
 
-    // if hartid !=0{
-    //     println!("hello form {}",hartid);
-    //     spin_loop_hint();
-    // }
-
-
+    send_ipi(0xd);
+    
     extern "C" {
         fn stext();
         fn etext();
@@ -102,19 +99,11 @@ pub fn rust_main(hartid: usize) -> ! {
 
     println!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
 
+
+    loop{}
+
     panic!("Shutdown machine!");
 }
 
 
 
-#[doc(hidden)]
-#[no_mangle]
-#[rustfmt::skip]
-pub extern "Rust" fn default_mp_hook(hartid: usize) -> bool {
-    match hartid {
-        0 => true,
-        _ => loop {
-            unsafe { riscv::asm::wfi() }
-        },
-    }
-}
