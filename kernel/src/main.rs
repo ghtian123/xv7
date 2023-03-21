@@ -36,6 +36,8 @@ spin:
 #[no_mangle]
 #[link_section = ".bss.stack"]
 static mut stack: [u8; 4096 * NCPU] = [0u8; 4096 * NCPU];
+static SMP_START: AtomicBool = AtomicBool::new(false);
+
 
 fn clear_bss() {
     extern "C" {
@@ -54,11 +56,11 @@ pub fn boot_all_harts(hartid: usize) {
 
     for id in (0..NCPU).filter(|i| *i != hartid) {
         // priv: 1 for supervisor; 0 for user;
-        rustsbi::hart_start(id, _start as usize, 1).unwrap();
+        rustsbi::hart_start(id, _start as usize, 1);
     }
 }
 
-static SMP_START: AtomicBool = AtomicBool::new(false);
+
 
 #[no_mangle]
 pub fn rust_main(hartid: usize) -> ! {
