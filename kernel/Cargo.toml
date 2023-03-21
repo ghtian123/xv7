@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 log = "0.4"
 riscv = "0.10.1"
-
+rustsbi = "0.3.2"
 
 
 

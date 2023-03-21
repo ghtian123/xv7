@@ -4,7 +4,7 @@
 
 */
 
-use crate::sbi::console_putchar;
+use crate::rustsbi::console_putchar;
 use core::fmt::{self, Write};
 
 struct Stdout;

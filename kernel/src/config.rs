@@ -2,4 +2,4 @@
 
 
 //cpu 个数
-pub const NCPU: usize = 8;
+pub const NCPU: usize = 3;
