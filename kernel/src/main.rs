@@ -1,15 +1,22 @@
 #![no_std]
 #![no_main]
 #![feature(panic_info_message)]
+#![feature(alloc_error_handler)]
 
 #[macro_use]
 mod console;
 mod config;
 mod lang_items;
+mod memory;
 mod rustsbi;
 
-use config::NCPU;
-use core::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use crate::config::NCPU;
+use core::sync::atomic::{AtomicBool, Ordering};
+
+//使用alloc 数据结构
+extern crate alloc;
+
+use crate::memory::{kheap_init};
 
 core::arch::global_asm!(
     "
@@ -38,7 +45,6 @@ spin:
 static mut stack: [u8; 4096 * NCPU] = [0u8; 4096 * NCPU];
 static SMP_START: AtomicBool = AtomicBool::new(false);
 
-
 fn clear_bss() {
     extern "C" {
         fn sbss();
@@ -56,11 +62,9 @@ pub fn boot_all_harts(hartid: usize) {
 
     for id in (0..NCPU).filter(|i| *i != hartid) {
         // priv: 1 for supervisor; 0 for user;
-        rustsbi::hart_start(id, _start as usize, 1);
+        let _ = rustsbi::hart_start(id, _start as usize, 1);
     }
 }
-
-
 
 #[no_mangle]
 pub fn rust_main(hartid: usize) -> ! {
@@ -77,6 +81,8 @@ pub fn rust_main(hartid: usize) -> ! {
         }
 
         clear_bss();
+        //初始化rust堆内存，后面就可以使用allco的数据结构
+        kheap_init();
 
         println!("Hello, world! {}", hartid);
         println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
