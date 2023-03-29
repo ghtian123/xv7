@@ -20,7 +20,7 @@ impl Kmm {
             p += PAGE_SIZE;
         }
 
-        Mutex::new(free)
+        Kmm(Mutex::new(free))
     }
 
     fn kalloc(&mut self) -> Option<usize> {
