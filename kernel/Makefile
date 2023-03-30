@@ -36,7 +36,7 @@ run: build
 		-machine virt \
 		-nographic \
 		-bios $(BOOTLOADER) \
-		-smp 2 \
+		-smp 3 \
 		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
 
 debug: build

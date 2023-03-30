@@ -54,5 +54,4 @@ lazy_static! {
 
 pub fn kinit() {
     KALLOC.lock().init();
-    println!("done")
 }
