@@ -29,9 +29,9 @@ impl KernelMemory {
 
     pub fn kalloc(&mut self) -> Option<usize> {
         if let Some(addr) = self.0.pop_front() {
-            // unsafe {
-            //     ptr::write_bytes(addr as *mut u8, 0, PAGE_SIZE);
-            // }
+            unsafe {
+                ptr::write_bytes(addr as *mut u8, 0, PAGE_SIZE);
+            }
             return Some(addr);
         }
         return None;
@@ -41,9 +41,9 @@ impl KernelMemory {
         if addr % PAGE_SIZE != 0 || addr < ekernel as usize || addr >= MEMORY_END {
             panic!("kfree")
         }
-        // unsafe {
-        //     ptr::write_bytes(addr as *mut u8, 0, 4096);
-        // }
+        unsafe {
+            ptr::write_bytes(addr as *mut u8, 0, 4096);
+        }
         self.0.push_back(addr)
     }
 }
