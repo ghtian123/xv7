@@ -16,7 +16,7 @@ use core::sync::atomic::{AtomicBool, Ordering};
 //使用alloc 数据结构
 extern crate alloc;
 
-use crate::memory::{kheap_init};
+use crate::memory::{kheap_init, kinit};
 
 core::arch::global_asm!(
     "
@@ -83,6 +83,9 @@ pub fn rust_main(hartid: usize) -> ! {
         clear_bss();
         //初始化rust堆内存，后面就可以使用allco的数据结构
         kheap_init();
+
+        //页分配
+        kinit();
 
         println!("Hello, world! {}", hartid);
         println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
