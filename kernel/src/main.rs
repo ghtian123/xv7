@@ -4,7 +4,7 @@
 #![feature(alloc_error_handler)]
 
 #[macro_use]
-mod console;
+mod printf;
 mod config;
 mod lang_items;
 mod memory;
@@ -44,6 +44,7 @@ spin:
 #[link_section = ".bss.stack"]
 static mut stack: [u8; 4096 * NCPU] = [0u8; 4096 * NCPU];
 static SMP_START: AtomicBool = AtomicBool::new(false);
+static IS_BOOTALL: AtomicBool = AtomicBool::new(false);
 
 fn clear_bss() {
     extern "C" {
@@ -58,7 +59,7 @@ pub fn boot_all_harts(hartid: usize) {
         fn _start();
     }
 
-    SMP_START.store(true, Ordering::Relaxed);
+    IS_BOOTALL.store(true, Ordering::Relaxed);
 
     for id in (0..NCPU).filter(|i| *i != hartid) {
         // priv: 1 for supervisor; 0 for user;
@@ -68,7 +69,13 @@ pub fn boot_all_harts(hartid: usize) {
 
 #[no_mangle]
 pub fn rust_main(hartid: usize) -> ! {
-    if !SMP_START.load(Ordering::Acquire) {
+    println!("harid-->{}", hartid);
+
+    if !IS_BOOTALL.load(Ordering::Acquire) {
+        boot_all_harts(hartid)
+    }
+
+    if hartid == 0 {
         extern "C" {
             fn stext();
             fn etext();
@@ -97,12 +104,13 @@ pub fn rust_main(hartid: usize) -> ! {
 
         println!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
 
-        boot_all_harts(hartid);
+        SMP_START.store(true, Ordering::Relaxed);
 
         loop {}
     } else {
-        println!("Hello, world! {}", hartid);
+        while !SMP_START.load(Ordering::Acquire) {}
 
+        println!("Hello, world! {}", hartid);
         loop {}
     }
 

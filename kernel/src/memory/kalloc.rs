@@ -22,18 +22,16 @@ impl KernelMemory {
     fn init(&mut self) {
         let mut p = PGROUNDUP(ekernel as usize);
         while p + PAGE_SIZE <= MEMORY_END {
-            println!("{}-{}", p, MEMORY_END);
             p += PAGE_SIZE;
-
-            self.0.push_back(p);
+            self.0.push_back(p)
         }
     }
 
     pub fn kalloc(&mut self) -> Option<usize> {
         if let Some(addr) = self.0.pop_front() {
-            unsafe {
-                ptr::write_bytes(addr as *mut u8, 0, PAGE_SIZE);
-            }
+            // unsafe {
+            //     ptr::write_bytes(addr as *mut u8, 0, PAGE_SIZE);
+            // }
             return Some(addr);
         }
         return None;
@@ -43,15 +41,15 @@ impl KernelMemory {
         if addr % PAGE_SIZE != 0 || addr < ekernel as usize || addr >= MEMORY_END {
             panic!("kfree")
         }
-        unsafe {
-            ptr::write_bytes(addr as *mut u8, 0, 4096);
-        }
+        // unsafe {
+        //     ptr::write_bytes(addr as *mut u8, 0, 4096);
+        // }
         self.0.push_back(addr)
     }
 }
 
 lazy_static! {
-    pub static ref KALLOC: Mutex<KernelMemory> = unsafe { Mutex::new(KernelMemory::new()) };
+    pub static ref KALLOC: Mutex<KernelMemory> = { Mutex::new(KernelMemory::new()) };
 }
 
 pub fn kinit() {
