@@ -4,8 +4,9 @@
 
 */
 
-use crate::rustsbi::console_putchar;
+// use crate::rustsbi::console_putchar;
 use core::fmt::{self, Write};
+use sbi_rt::legacy::console_putchar;
 
 struct Stdout;
 
@@ -25,13 +26,13 @@ pub fn print(args: fmt::Arguments) {
 #[macro_export]
 macro_rules! print {
     ($fmt: literal $(, $($arg: tt)+)?) => {
-        $crate::console::print(format_args!($fmt $(, $($arg)+)?));
+        $crate::arch::platform::qemu_virt_riscv::console::print(format_args!($fmt $(, $($arg)+)?));
     }
 }
 
 #[macro_export]
 macro_rules! println {
     ($fmt: literal $(, $($arg: tt)+)?) => {
-        $crate::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
+        $crate::arch::platform::qemu_virt_riscv::console::print(format_args!(concat!($fmt, "\n") $(, $($arg)+)?));
     }
 }

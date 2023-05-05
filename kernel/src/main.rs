@@ -4,11 +4,11 @@
 #![feature(alloc_error_handler)]
 
 #[macro_use]
-mod console;
+mod arch;
 mod config;
 mod lang_items;
 mod memory;
-mod rustsbi;
+
 
 use crate::config::NCPU;
 use core::sync::atomic::{AtomicBool, Ordering};
@@ -62,7 +62,8 @@ pub fn boot_all_harts(hartid: usize) {
 
     for id in (0..NCPU).filter(|i| *i != hartid) {
         // priv: 1 for supervisor; 0 for user;
-        let _ = rustsbi::hart_start(id, _start as usize, 1);
+
+        let _ =  sbi_rt::hart_start(id, _start as usize, 1);
     }
 }
 
