@@ -4,66 +4,38 @@
 #![feature(alloc_error_handler)]
 #![feature(naked_functions)]
 #![feature(asm_const)]
-
+#![feature(stdsimd)]
 #[macro_use]
 mod arch;
 mod config;
 mod lang_items;
 mod memory;
 
-
-
 use crate::config::NCPU;
-use core::sync::atomic::{AtomicBool, Ordering};
 pub use arch::platform::qemu_virt_riscv::console::*;
+use core::sync::atomic::{AtomicBool, Ordering};
 
 //使用alloc 数据结构
 extern crate alloc;
 
-use crate::memory::{kheap_init};
+use crate::memory::kheap_init;
 
-core::arch::global_asm!(
-    "
-    .section .text.entry
-    .globl _start
-_start:
+#[naked]
+#[no_mangle]
+#[link_section = ".text.entry"]
+unsafe extern "C" fn _start() -> ! {
+    core::arch::asm!(
+        "add  t0, a0, 1",
+        "slli t0, t0, 12",
+        "la   sp, {stack}",
+        "add  sp, sp, t0",
+        "call  {main}",
 
-    # a0 == hartid
-    # pc == 0x80200000
-    # sp == 0x800xxxxx
-    # sp = bootstack + (hartid + 1) * 0x10000
-
-    add  t0, a0, 1
-    slli t0, t0, 14
-    la   sp, stack
-    add  sp, sp, t0
-
-    call  rust_main
-spin:
-    j spin
-"
-);
-
-// #[naked]
-// #[no_mangle]
-// #[link_section = ".text.entry"]
-// unsafe extern "C" fn _start() -> ! {
-//     const STACK_SIZE: usize = 4096;
-
-//     #[link_section = ".bss.stack"]
-//     static mut STACK: [u8; STACK_SIZE] = [0u8; STACK_SIZE];
-
-//     core::arch::asm!(
-//         "la sp, {stack} + {stack_size}",
-//         "j  {main}",
-//         stack_size = const STACK_SIZE,
-//         stack      =   sym STACK,
-//         main       =   sym rust_main,
-//         options(noreturn),
-//     )
-// }
-
-
+        stack      =   sym stack,
+        main       =   sym rust_main,
+        options(noreturn),
+    )
+}
 
 #[no_mangle]
 #[link_section = ".bss.stack"]
@@ -85,18 +57,17 @@ pub fn boot_all_harts(hartid: usize) {
 
     SMP_START.store(true, Ordering::SeqCst);
 
-    println!("I am cpu id {}",hartid);
+    println!("I am cpu id {}", hartid);
     for id in (0..NCPU).filter(|i| *i != hartid) {
         // priv: 1 for supervisor; 0 for user;
-        println!("Starting cpu id {}",id);
-        let x =  sbi_rt::hart_start(id, _start as usize, 1);
-        println!("Starting ret {}--{:?}",id,x)
+        println!("Starting cpu id {}", id);
+        let x = sbi_rt::hart_start(id, _start as usize, 1);
+        println!("Starting ret {}--{:?}", id, x);
     }
 }
 
 #[no_mangle]
 pub fn rust_main(hartid: usize) -> ! {
-    
     if !SMP_START.load(Ordering::SeqCst) {
         extern "C" {
             fn stext();
@@ -134,15 +105,3 @@ pub fn rust_main(hartid: usize) -> ! {
 
     panic!("shut down!")
 }
-
-
-
-
-
-
-
-
-
-
-
-

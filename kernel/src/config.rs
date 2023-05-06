@@ -1,6 +1,5 @@
 //xv7 内核配置
 
-
 //cpu 个数
 pub const NCPU: usize = 4;
 pub const KERNEL_HEAP_SIZE: usize = 0x20_0000;

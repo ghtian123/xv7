@@ -16,5 +16,3 @@ pub fn kheap_init() {
             .init(HEAP_SPACE.as_ptr() as usize, KERNEL_HEAP_SIZE);
     }
 }
-
-

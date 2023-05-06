@@ -1,5 +1,5 @@
-use sbi_rt::legacy::shutdown;
 use core::panic::PanicInfo;
+use sbi_rt::legacy::shutdown;
 
 use crate::println;
 
@@ -17,7 +17,6 @@ fn panic(info: &PanicInfo) -> ! {
     }
     shutdown()
 }
-
 
 #[alloc_error_handler]
 pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
