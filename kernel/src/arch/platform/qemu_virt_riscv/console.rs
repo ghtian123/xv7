@@ -1,12 +1,6 @@
-/*！
-
-本模块实现了 print 和 println 宏。
-
-*/
-
-// use crate::rustsbi::console_putchar;
 use core::fmt::{self, Write};
 use sbi_rt::legacy::console_putchar;
+use spin::Mutex;
 
 struct Stdout;
 
@@ -20,6 +14,8 @@ impl Write for Stdout {
 }
 
 pub fn print(args: fmt::Arguments) {
+    static LOCK: Mutex<()> = Mutex::new(());
+    let _guard = LOCK.lock();
     Stdout.write_fmt(args).unwrap();
 }
 

@@ -23,7 +23,7 @@ $(KERNEL_BIN): kernel
 
 env:
 	(rustup target list | grep "riscv64gc-unknown-none-elf (installed)") || rustup target add $(TARGET)
-	cargo install cargo-binutils
+	# cargo install cargo-binutils
 
 kernel:
 	@cargo build --release
@@ -36,8 +36,15 @@ run: build
 		-machine virt \
 		-nographic \
 		-bios $(BOOTLOADER) \
-		-smp 5 \
+		-smp 4 \
 		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
+
+# run: build
+# 	@qemu-system-riscv64 \
+# 		-machine virt \
+# 		-nographic \
+# 		-smp 1 \
+# 		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
 
 debug: build
 	@tmux new-session -d \
@@ -45,7 +52,19 @@ debug: build
 		tmux split-window -h "riscv64-unknown-elf-gdb -ex 'file $(KERNEL_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'" && \
 		tmux -2 attach-session -d
 
+# debug: build
+# 	@tmux new-session -d \
+# 		"qemu-system-riscv64 -machine virt -nographic  -device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA) -s -S" && \
+# 		tmux split-window -h "riscv64-unknown-elf-gdb -ex 'file $(KERNEL_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'" && \
+# 		tmux -2 attach-session -d
+
 dbg: build
 	qemu-system-riscv64 -machine virt -nographic -bios $(BOOTLOADER) -device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA) -s -S
+
+
+
+# dbg: build
+# 	qemu-system-riscv64 -machine virt -nographic -device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA) -s -S
+
 
 .PHONY: build env kernel clean run-inner

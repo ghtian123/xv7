@@ -2,6 +2,8 @@
 #![no_main]
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
+#![feature(naked_functions)]
+#![feature(asm_const)]
 
 #[macro_use]
 mod arch;
@@ -10,8 +12,10 @@ mod lang_items;
 mod memory;
 
 
+
 use crate::config::NCPU;
 use core::sync::atomic::{AtomicBool, Ordering};
+pub use arch::platform::qemu_virt_riscv::console::*;
 
 //使用alloc 数据结构
 extern crate alloc;
@@ -40,6 +44,27 @@ spin:
 "
 );
 
+// #[naked]
+// #[no_mangle]
+// #[link_section = ".text.entry"]
+// unsafe extern "C" fn _start() -> ! {
+//     const STACK_SIZE: usize = 4096;
+
+//     #[link_section = ".bss.stack"]
+//     static mut STACK: [u8; STACK_SIZE] = [0u8; STACK_SIZE];
+
+//     core::arch::asm!(
+//         "la sp, {stack} + {stack_size}",
+//         "j  {main}",
+//         stack_size = const STACK_SIZE,
+//         stack      =   sym STACK,
+//         main       =   sym rust_main,
+//         options(noreturn),
+//     )
+// }
+
+
+
 #[no_mangle]
 #[link_section = ".bss.stack"]
 static mut stack: [u8; 4096 * NCPU] = [0u8; 4096 * NCPU];
@@ -58,18 +83,21 @@ pub fn boot_all_harts(hartid: usize) {
         fn _start();
     }
 
-    SMP_START.store(true, Ordering::Relaxed);
+    SMP_START.store(true, Ordering::SeqCst);
 
+    println!("I am cpu id {}",hartid);
     for id in (0..NCPU).filter(|i| *i != hartid) {
         // priv: 1 for supervisor; 0 for user;
-
-        let _ =  sbi_rt::hart_start(id, _start as usize, 1);
+        println!("Starting cpu id {}",id);
+        let x =  sbi_rt::hart_start(id, _start as usize, 1);
+        println!("Starting ret {}--{:?}",id,x)
     }
 }
 
 #[no_mangle]
 pub fn rust_main(hartid: usize) -> ! {
-    if !SMP_START.load(Ordering::Acquire) {
+    
+    if !SMP_START.load(Ordering::SeqCst) {
         extern "C" {
             fn stext();
             fn etext();
@@ -106,3 +134,15 @@ pub fn rust_main(hartid: usize) -> ! {
 
     panic!("shut down!")
 }
+
+
+
+
+
+
+
+
+
+
+
+
