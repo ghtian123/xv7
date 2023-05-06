@@ -57,10 +57,8 @@ pub fn boot_all_harts(hartid: usize) {
 
     SMP_START.store(true, Ordering::SeqCst);
 
-    println!("I am cpu id {}", hartid);
     for id in (0..NCPU).filter(|i| *i != hartid) {
         // priv: 1 for supervisor; 0 for user;
-        println!("Starting cpu id {}", id);
         let x = sbi_rt::hart_start(id, _start as usize, 1);
         println!("Starting ret {}--{:?}", id, x);
     }
