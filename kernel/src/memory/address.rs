@@ -1,7 +1,7 @@
 use crate::config::PAGE_SIZE;
-
+use super::FRAME_ALLOCATOR;
 #[repr(C)]
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq,Debug)]
 pub struct PhysAddr(pub usize);
 
 impl From<usize> for PhysAddr {

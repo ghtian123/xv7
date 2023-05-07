@@ -11,7 +11,7 @@ mod config;
 mod lang_items;
 mod memory;
 
-use crate::config::NCPU;
+use crate::{config::NCPU, memory::{kalloc_init, test_alloc}};
 pub use arch::platform::qemu_virt_riscv::console::*;
 use core::sync::atomic::{AtomicBool, Ordering};
 
@@ -76,12 +76,18 @@ pub fn rust_main(hartid: usize) -> ! {
             fn edata();
             fn sbss();
             fn ebss();
+            fn ekernel();
         }
 
         clear_bss();
         //初始化rust堆内存，后面就可以使用allco的数据结构
         kheap_init();
 
+        kalloc_init();
+
+
+        
+        
         println!("Hello, world! {}", hartid);
         println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
         println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
@@ -91,6 +97,7 @@ pub fn rust_main(hartid: usize) -> ! {
         }
 
         println!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
+        println!("ekernel [{:#x} ",ekernel as usize);
 
         boot_all_harts(hartid);
 
